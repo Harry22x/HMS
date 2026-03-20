@@ -1,77 +1,123 @@
-from datetime import datetime
-from config import db
 from sqlalchemy_serializer import SerializerMixin
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import validates
+from config import db, bcrypt
 
-
-class User(db.Model,SerializerMixin):
+class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
-    user_id = db.Column(db.Integer, primary_key=True)
-    full_name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    role = db.Column(db.String(50), nullable=False) 
-    password_hash = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-
-    # Relationships
-    managed_hostels = db.relationship('Hostel', backref='manager', lazy=True)
-    bookings = db.relationship('Booking', backref='student', lazy=True)
-    announcements = db.relationship('Announcement', backref='sender', lazy=True)
     
-    # Complaints sent/received
-    complaints_sent = db.relationship('Complaint', foreign_keys='Complaint.sender_id', backref='sender', lazy=True)
-    complaints_received = db.relationship('Complaint', foreign_keys='Complaint.receiver_id', backref='receiver', lazy=True)
+    # Exclude password and prevent infinite loops in serialization
+    serialize_rules = ('-_password_hash', '-managed_hostels.manager', '-bookings.student', '-sent_complaints.sender', '-received_complaints.receiver', '-announcements.sender')
 
+    id = db.Column(db.Integer, primary_key=True)
+    full_name = db.Column(db.String, nullable=False)
+    email = db.Column(db.String, unique=True, nullable=False)
+    role = db.Column(db.String, nullable=False)
+    _password_hash = db.Column(db.String, nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-class Hostel(db.Model,SerializerMixin):
+    # Relationships
+    managed_hostels = db.relationship('Hostel', back_populates='manager', cascade='all, delete-orphan')
+    bookings = db.relationship('Booking', back_populates='student', cascade='all, delete-orphan')
+    announcements = db.relationship('Announcement', back_populates='sender', cascade='all, delete-orphan')
+    
+    sent_complaints = db.relationship('Complaint', foreign_keys='Complaint.sender_id', back_populates='sender')
+    received_complaints = db.relationship('Complaint', foreign_keys='Complaint.receiver_id', back_populates='receiver')
+
+    @hybrid_property
+    def password_hash(self):
+        raise AttributeError("Password hash cannot be accessed")
+
+    @password_hash.setter
+    def password_hash(self, password):
+        password_hash = bcrypt.generate_password_hash(password.encode('utf-8'))
+        self._password_hash = password_hash.decode("utf-8")
+
+    def authenticate(self, password):
+        return bcrypt.check_password_hash(self._password_hash, password.encode('utf-8'))
+
+    @validates('email')
+    def validate_email(self, key, email):
+        if '@' not in email:
+            raise ValueError("Invalid email address.")
+        return email
+
+class Hostel(db.Model, SerializerMixin):
     __tablename__ = 'hostels'
-    hostel_id = db.Column(db.Integer, primary_key=True)
-    hostel_name = db.Column(db.String(150), nullable=False)
-    location_coordinates = db.Column(db.Float, nullable=False) # Consider Two columns (lat/lng) if needed
-    description = db.Column(db.Text, nullable=False)
-    status = db.Column(db.String(50), nullable=False) # e.g., 'active', 'under maintenance'
-    images = db.Column(db.String(255), nullable=False) # URL or Path
-    amenities = db.Column(db.String(255)) 
-    manager_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    
+    serialize_rules = ('-rooms.hostel', '-manager.managed_hostels')
 
-    # Relationships
-    rooms = db.relationship('Room', backref='hostel', lazy=True, cascade="all, delete-orphan")
+    id = db.Column(db.Integer, primary_key=True)
+    hostel_name = db.Column(db.String, nullable=False)
+    location_coordinates = db.Column(db.Float, nullable=False)
+    description = db.Column(db.String, nullable=False)
+    status = db.Column(db.String, default='active')
+    images = db.Column(db.String, nullable=False)
+    amenities = db.Column(db.String)
+    manager_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
+    manager = db.relationship('User', back_populates='managed_hostels')
+    rooms = db.relationship('Room', back_populates='hostel', cascade='all, delete-orphan')
 
-class Room(db.Model,SerializerMixin):
+class Room(db.Model, SerializerMixin):
     __tablename__ = 'rooms'
-    room_id = db.Column(db.Integer, primary_key=True)
-    room_type = db.Column(db.String(50), nullable=False)
+    
+    serialize_rules = ('-hostel.rooms', '-bookings.room')
+
+    id = db.Column(db.Integer, primary_key=True)
+    room_type = db.Column(db.String, nullable=False)
     capacity = db.Column(db.Integer, nullable=False)
-    current_occupancy = db.Column(db.Integer, default=0, nullable=False)
+    current_occupancy = db.Column(db.Integer, default=0)
     price = db.Column(db.Float, nullable=False)
-    images = db.Column(db.String(255), nullable=False)
-    hostel_id = db.Column(db.Integer, db.ForeignKey('hostels.hostel_id'), nullable=False)
+    images = db.Column(db.String, nullable=False)
+    hostel_id = db.Column(db.Integer, db.ForeignKey('hostels.id'), nullable=False)
 
-    # Relationships
-    bookings = db.relationship('Booking', backref='room', lazy=True)
+    hostel = db.relationship('Hostel', back_populates='rooms')
+    bookings = db.relationship('Booking', back_populates='room', cascade='all, delete-orphan')
 
+    @validates('current_occupancy')
+    def validate_occupancy(self, key, occupancy):
+        if occupancy > self.capacity:
+            raise ValueError("Occupancy cannot exceed room capacity.")
+        return occupancy
 
-class Booking(db.Model,SerializerMixin):
+class Booking(db.Model, SerializerMixin):
     __tablename__ = 'bookings'
-    booking_id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-    room_id = db.Column(db.Integer, db.ForeignKey('rooms.room_id'), nullable=False)
-    status = db.Column(db.String(50), nullable=False) # e.g., 'pending', 'confirmed', 'cancelled'
-    booking_date = db.Column(db.Date, default=datetime.utcnow, nullable=False)
+    
+    serialize_rules = ('-student.bookings', '-room.bookings')
 
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'), nullable=False)
+    status = db.Column(db.String, default='pending')
+    booking_date = db.Column(db.Date, server_default=db.func.now())
 
-class Announcement(db.Model,SerializerMixin):
+    student = db.relationship('User', back_populates='bookings')
+    room = db.relationship('Room', back_populates='bookings')
+
+class Announcement(db.Model, SerializerMixin):
     __tablename__ = 'announcements'
-    announcement_id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    
+    serialize_rules = ('-sender.announcements',)
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
+    sender = db.relationship('User', back_populates='announcements')
 
-class Complaint(db.Model,SerializerMixin):
+class Complaint(db.Model, SerializerMixin):
     __tablename__ = 'complaints'
-    message_id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
-    receiver_id = db.Column(db.Integer, db.ForeignKey('users.user_id'), nullable=False)
+    
+    serialize_rules = ('-sender.sent_complaints', '-receiver.received_complaints')
+
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
+
+    sender = db.relationship('User', foreign_keys=[sender_id], back_populates='sent_complaints')
+    receiver = db.relationship('User', foreign_keys=[receiver_id], back_populates='received_complaints')

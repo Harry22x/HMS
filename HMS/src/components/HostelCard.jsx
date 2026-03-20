@@ -1,5 +1,6 @@
 import React from 'react';
 import { Wifi, Car, UtensilsCrossed, WashingMachine, MapPin } from 'lucide-react';
+import {Link} from 'react-router-dom';
 
 const HostelCard = ({id,name,location,image,description}) => {
   const amenities = [
@@ -10,6 +11,7 @@ const HostelCard = ({id,name,location,image,description}) => {
   ];
 
   return (
+    <Link to={`hostels/${id}`}>
     <div className="max-w-sm rounded-2xl overflow-hidden shadow-lg bg-white border border-gray-100 font-sans">
       {/* Image Section */}
       <div className="relative h-56">
@@ -52,6 +54,7 @@ const HostelCard = ({id,name,location,image,description}) => {
         </button>
       </div>
     </div>
+    </Link>
   );
 };
 
