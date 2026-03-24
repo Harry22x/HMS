@@ -13,7 +13,7 @@ const HostelCard = ({id,name,location,image,description}) => {
   return (
     <Link to={`hostels/${id}`}>
     <div className="max-w-sm rounded-2xl overflow-hidden shadow-lg bg-white border border-gray-100 font-sans">
-      {/* Image Section */}
+      
       <div className="relative h-56">
         <img 
           src={image} 
@@ -22,7 +22,7 @@ const HostelCard = ({id,name,location,image,description}) => {
         />
       </div>
 
-      {/* Content Section */}
+      
       <div className="p-6">
         <h2 className="text-2xl font-bold text-gray-900">{name}</h2>
         
@@ -35,7 +35,6 @@ const HostelCard = ({id,name,location,image,description}) => {
          {description}
         </p>
 
-        {/* Amenities Tags */}
         <div className="flex flex-wrap gap-2 mb-8">
           {amenities.map((item) => (
             <div 
@@ -48,7 +47,7 @@ const HostelCard = ({id,name,location,image,description}) => {
           ))}
         </div>
 
-        {/* Action Button */}
+        
         <button className="w-full bg-[#050510] text-white py-4 rounded-xl font-semibold text-lg hover:bg-gray-800 transition-colors">
           View Details
         </button>

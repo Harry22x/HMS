@@ -1,6 +1,6 @@
-# app.py
-from config import app, db, migrate,api  # Import 'migrate' so the 'db' command registers
-from models import User, Hostel, Room, Booking, Announcement, Complaint # VERY IMPORTANT
+
+from config import app, db, migrate,api  
+from models import User, Hostel, Room, Booking, Announcement, Complaint 
 from flask import request,make_response,session,jsonify
 from flask_restful import Resource
 
@@ -21,7 +21,7 @@ class Hostels(Resource):
 
 class GetHostelById(Resource):
     def get(self,id):
-        hostel = Hostel.query.get(id)
+        hostel = Hostel.query.filter_by(id=id).first()
         if hostel:
             return make_response(hostel.to_dict(),200) 
         else:

@@ -7,7 +7,6 @@ from config import db, bcrypt
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
     
-    # Exclude password and prevent infinite loops in serialization
     serialize_rules = ('-_password_hash', '-managed_hostels.manager', '-bookings.student', '-sent_complaints.sender', '-received_complaints.receiver', '-announcements.sender')
 
     id = db.Column(db.Integer, primary_key=True)
@@ -17,7 +16,7 @@ class User(db.Model, SerializerMixin):
     _password_hash = db.Column(db.String, nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-    # Relationships
+    
     managed_hostels = db.relationship('Hostel', back_populates='manager', cascade='all, delete-orphan')
     bookings = db.relationship('Booking', back_populates='student', cascade='all, delete-orphan')
     announcements = db.relationship('Announcement', back_populates='sender', cascade='all, delete-orphan')
@@ -72,6 +71,7 @@ class Room(db.Model, SerializerMixin):
     price = db.Column(db.Float, nullable=False)
     images = db.Column(db.String, nullable=False)
     hostel_id = db.Column(db.Integer, db.ForeignKey('hostels.id'), nullable=False)
+    description = db.Column(db.String, nullable =False)
 
     hostel = db.relationship('Hostel', back_populates='rooms')
     bookings = db.relationship('Booking', back_populates='room', cascade='all, delete-orphan')

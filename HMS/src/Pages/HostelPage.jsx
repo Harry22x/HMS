@@ -24,7 +24,7 @@ export default function HostelPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left Side: Hostel Info & Room Selection */}
+        
         <div className="lg:col-span-1">
           <img src={hostel.images} alt={hostel.hostel_name} className="w-full h-64 object-cover rounded-2xl mb-4" />
           <h1 className="text-3xl font-bold">{hostel.hostel_name}</h1>
@@ -50,7 +50,7 @@ export default function HostelPage() {
                 >
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-lg">{room.room_type}</span>
-                    <span className="text-blue-600 font-semibold">${room.price}/mo</span>
+                    <span className="text-blue-600 font-semibold">Ksh. {room.price}/mo</span>
                   </div>
                   <p className="text-sm text-gray-500">{room.capacity} beds per room</p>
                   {isFull && <span className="text-xs font-bold text-red-500 uppercase">Sold Out</span>}
@@ -60,7 +60,7 @@ export default function HostelPage() {
           </div>
         </div>
 
-        {/* Right Side: Room Details Display */}
+       
         <div className="lg:col-span-2">
           {selectedRoom ? (
             <RoomDetails room={selectedRoom} />

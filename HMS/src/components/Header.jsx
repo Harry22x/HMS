@@ -9,7 +9,7 @@ return (
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <Building2 className="w-8 h-8 text-blue-600" />
-            <span className="text-xl font-semibold">HostelHub</span>
+            <span className="text-xl font-semibold">Strathmore HostelHub</span>
           </Link>
 
           <nav className="flex items-center gap-4">

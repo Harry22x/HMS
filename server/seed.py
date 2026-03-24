@@ -1,84 +1,89 @@
 from config import app, db, bcrypt
-from models import User, Hostel
-import json
+from models import User, Hostel, Room
+from datetime import datetime
 
 def seed_database():
     with app.app_context():
         print("Clearing existing data...")
+        Room.query.delete()
         Hostel.query.delete()
         User.query.delete()
 
         print("Creating managers...")
-        # Create a couple of manager users
-        m1 = User(
-            full_name="Alice Johnson",
-            email="alice@hostel.com",
-            role="manager"
-        )
-        m1.password_hash = "password123" # This triggers the setter & bcrypt
-
-        m2 = User(
-            full_name="Bob Smith",
-            email="bob@hostel.com",
-            role="manager"
-        )
+        m1 = User(full_name="Alice Johnson", email="alice@hostel.com", role="manager")
+        m1.password_hash = "password123"
+        
+        m2 = User(full_name="Bob Smith", email="bob@hostel.com", role="manager")
         m2.password_hash = "password123"
 
         db.session.add_all([m1, m2])
-        db.session.commit() # Commit to get their IDs
+        db.session.commit()
 
-        print("Seeding hostels...")
-        hostel_data = [
+        print("Seeding hostels and rooms...")
+        hostel_info = [
+            {"name": "University Heights", "mgr": m1, "img": "https://i.gzn.jp/img/2014/03/21/oxford-university-student-hall/top.jpg"},
+            {"name": "Central Residence", "mgr": m1, "img": "https://images.unsplash.com/photo-1564273795917-fe399b763988?q=80&w=1000"},
+            {"name": "Eastside Dorm", "mgr": m2, "img": "https://images.unsplash.com/photo-1539606420556-14c457c45507?q=80&w=1000"},
+            {"name": "Westwood Hall", "mgr": m2, "img": "https://images.unsplash.com/photo-1689090348341-a5936ec7e79e?q=80&w=1000"},
+        ]
+
+        
+        room_templates = [
             {
-                "name": 'University Heights Hostel',
-                "location": 'Campus North, Block A',
-                "amenities": ['WiFi', 'Parking', 'Cafeteria', 'Laundry'],
-                "image": 'https://images.unsplash.com/photo-1552933440-440952890413?q=80&w=1080',
-                "description": 'Modern hostel facilities with excellent amenities',
-                "manager": m1
+                "type": "Premium",
+                "capacity": 1,
+                "price": 25000.0,
+                "occ": 0, 
+                "desc": "Single occupant luxury suite with private study desk and en-suite bathroom.",
+                "img": "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800"
             },
             {
-                "name": 'Central Student Residence',
-                "location": 'Main Campus, Building 5',
-                "amenities": ['WiFi', 'Study Room', 'Gym'],
-                "image": 'https://images.unsplash.com/photo-1564273795917-fe399b763988?q=80&w=1080',
-                "description": 'Comfortable rooms in a central location',
-                "manager": m1
+                "type": "Twin",
+                "capacity": 2,
+                "price": 20000.0,
+                "occ": 2, 
+                "desc": "Comfortable shared room for two with partitioned workspaces and shared storage.",
+                "img": "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?q=80&w=800"
             },
             {
-                "name": 'Eastside Dormitory',
-                "location": 'East Campus, Tower 2',
-                "amenities": ['WiFi', 'Parking', 'Security', 'Common Room'],
-                "image": 'https://images.unsplash.com/photo-1539606420556-14c457c45507?q=80&w=1080',
-                "description": 'Spacious accommodation with modern facilities',
-                "manager": m2
-            },
-            {
-                "name": 'Westwood Hall',
-                "location": 'West Campus, Block C',
-                "amenities": ['WiFi', 'Cafeteria', 'Library Access'],
-                "image": 'https://images.unsplash.com/photo-1689090348341-a5936ec7e79e?q=80&w=1080',
-                "description": 'Quiet and peaceful environment for students',
-                "manager": m2
+                "type": "Economy",
+                "capacity": 3,
+                "price": 13500.0,
+                "occ": 2, 
+                "desc": "Affordable triple-share room featuring bunk beds and high-speed WiFi access.",
+                "img": "https://images.unsplash.com/photo-1544124499-58912cbddaad?q=80&w=800"
             }
         ]
 
-        for h in hostel_data:
-            new_hostel = Hostel(
-                hostel_name=h["name"],
-                # Using 0.0 as placeholder for coordinates from your model
-                location_coordinates=0.0, 
-                description=h["description"],
-                images=h["image"],
-                # Join amenities list into a string for the DB
-                amenities=", ".join(h["amenities"]),
+        for h_data in hostel_info:
+           
+            h = Hostel(
+                hostel_name=h_data["name"],
+                location_coordinates=-1.2921, 
+                description=f"Top-tier student living at {h_data['name']}.",
+                images=h_data["img"],
+                amenities="WiFi, Laundry, Security",
                 status="active",
-                manager_id=h["manager"].id
+                manager_id=h_data["mgr"].id
             )
-            db.session.add(new_hostel)
+            db.session.add(h)
+            db.session.flush() 
+
+           
+            for r_temp in room_templates:
+                room = Room(
+                    room_type=r_temp["type"],
+                    capacity=r_temp["capacity"],
+                    current_occupancy=r_temp["occ"],
+                    price=r_temp["price"],
+                    description=r_temp["desc"],
+                    images=r_temp["img"],
+                    hostel_id=h.id
+                )
+                db.session.add(room)
 
         db.session.commit()
-        print("Database seeded successfully!")
+        print("Database seeded with hostels and specialized rooms!")
 
 if __name__ == '__main__':
     seed_database()

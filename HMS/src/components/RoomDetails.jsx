@@ -1,11 +1,11 @@
 import React from 'react';
 
 export default function RoomDetails({ room }) {
-  // Logic: Current occupancy vs Capacity
+
   const remainingSpace = room.capacity - room.current_occupancy;
   const occupancyRate = (room.current_occupancy / room.capacity) * 100;
   
-  // Requirement: Indication if occupancy is > 80% (less than 20% capacity remaining)
+ 
   const isAlmostFull = occupancyRate >= 80 && occupancyRate < 100;
 
   return (
@@ -38,7 +38,7 @@ export default function RoomDetails({ room }) {
 
         <div className="flex items-center justify-between pt-6 border-t border-gray-100">
           <div>
-            <span className="text-4xl font-black text-gray-900">${room.price}</span>
+            <span className="text-4xl font-black text-gray-900">Ksh. {room.price}</span>
             <span className="text-gray-500 font-medium"> / month</span>
           </div>
           
