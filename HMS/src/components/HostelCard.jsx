@@ -1,13 +1,18 @@
 import React from 'react';
-import { Wifi, Car, UtensilsCrossed, WashingMachine, MapPin } from 'lucide-react';
+import { Wifi, Car, UtensilsCrossed, WashingMachine, MapPin , Cctv, Dumbbell, BookOpenText, Users,SmartphoneCharging} from 'lucide-react';
 import {Link} from 'react-router-dom';
 
-const HostelCard = ({id,name,location,image,description}) => {
-  const amenities = [
+const HostelCard = ({id,name,location,image,description,amenities}) => {
+  const amenities_logo = [
     { name: 'WiFi', icon: <Wifi size={16} /> },
     { name: 'Parking', icon: <Car size={16} /> },
     { name: 'Cafeteria', icon: <UtensilsCrossed size={16} /> },
     { name: 'Laundry', icon: <WashingMachine size={16} /> },
+    {name:'Security', icon:<Cctv size={16} />},
+    {name:'Gym', icon:<Dumbbell size={16} />},
+    {name:'Study Room', icon:<BookOpenText size={16} />},
+    {name:'Common Room', icon:<Users size={16} />},
+    {name:'Backup Generator', icon:<SmartphoneCharging size={16} />}
   ];
 
   return (
@@ -36,13 +41,13 @@ const HostelCard = ({id,name,location,image,description}) => {
         </p>
 
         <div className="flex flex-wrap gap-2 mb-8">
-          {amenities.map((item) => (
+          {amenities.split(', ').map((item) => (
             <div 
-              key={item.name} 
+              key={item} 
               className="flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-lg text-gray-700 font-medium"
             >
-              {item.icon}
-              <span className="text-sm">{item.name}</span>
+              {amenities_logo.find((logo) => logo.name === item)?.icon || <></>}
+              <span className="text-sm">{item}</span>
             </div>
           ))}
         </div>

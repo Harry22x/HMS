@@ -1,8 +1,8 @@
 """initial migration
 
-Revision ID: 15c25c779794
+Revision ID: 379c4f7a7058
 Revises: 
-Create Date: 2026-03-18 16:29:41.418898
+Create Date: 2026-03-28 18:32:48.321192
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '15c25c779794'
+revision = '379c4f7a7058'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -49,7 +49,8 @@ def upgrade():
     op.create_table('hostels',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hostel_name', sa.String(), nullable=False),
-    sa.Column('location_coordinates', sa.Float(), nullable=False),
+    sa.Column('latitude', sa.Float(), nullable=False),
+    sa.Column('longitude', sa.Float(), nullable=False),
     sa.Column('description', sa.String(), nullable=False),
     sa.Column('status', sa.String(), nullable=True),
     sa.Column('images', sa.String(), nullable=False),
@@ -66,6 +67,7 @@ def upgrade():
     sa.Column('price', sa.Float(), nullable=False),
     sa.Column('images', sa.String(), nullable=False),
     sa.Column('hostel_id', sa.Integer(), nullable=False),
+    sa.Column('description', sa.String(), nullable=False),
     sa.ForeignKeyConstraint(['hostel_id'], ['hostels.id'], name=op.f('fk_rooms_hostel_id_hostels')),
     sa.PrimaryKeyConstraint('id')
     )

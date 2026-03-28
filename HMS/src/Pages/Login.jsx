@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-//import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../AuthContext'
 
 export default  function Login() {
+  const { login, checkSession } = useAuth();
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
-  //const { login } = useAuth();
+  
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const success = await login(formData.email, formData.password);
     if (success) {
+      
       navigate('/');
     }
   };
@@ -31,9 +34,9 @@ export default  function Login() {
           <p>Log in to your hostel management account</p>
         </div>
         <div>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 mt-6">
             <div className="space-y-2">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="email">Email</label><br></br>
               <input
                 id="email"
                 type="email"
@@ -61,7 +64,7 @@ export default  function Login() {
               />
             </div>
 
-            <button type="submit" className="w-full">
+            <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all">
               Log In
             </button>
 
