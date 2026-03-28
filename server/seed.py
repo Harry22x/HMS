@@ -31,25 +31,25 @@ def seed_database():
         room_templates = [
             {
                 "type": "Premium",
-                "capacity": 1,
+                "capacity": 15,
                 "price": 25000.0,
-                "occ": 0, 
+                "occ": 11, 
                 "desc": "Single occupant luxury suite with private study desk and en-suite bathroom.",
                 "img": "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?q=80&w=800"
             },
             {
                 "type": "Twin",
-                "capacity": 2,
+                "capacity": 30,
                 "price": 20000.0,
-                "occ": 2, 
+                "occ": 28, 
                 "desc": "Comfortable shared room for two with partitioned workspaces and shared storage.",
                 "img": "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?q=80&w=800"
             },
             {
                 "type": "Economy",
-                "capacity": 3,
+                "capacity": 45,
                 "price": 13500.0,
-                "occ": 2, 
+                "occ": 23, 
                 "desc": "Affordable triple-share room featuring bunk beds and high-speed WiFi access.",
                 "img": "https://images.unsplash.com/photo-1544124499-58912cbddaad?q=80&w=800"
             }
@@ -59,7 +59,8 @@ def seed_database():
            
             h = Hostel(
                 hostel_name=h_data["name"],
-                location_coordinates=-1.2921, 
+                latitude=-1.2921, 
+                longitude=36.8219,
                 description=f"Top-tier student living at {h_data['name']}.",
                 images=h_data["img"],
                 amenities="WiFi, Laundry, Security",

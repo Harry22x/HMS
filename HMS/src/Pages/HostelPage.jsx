@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import RoomDetails from "../components/RoomDetails";
+import HostelLocationMap from "../components/HostelLocationMap";
+
 
 export default function HostelPage() {
   const { id } = useParams();
@@ -58,6 +60,7 @@ export default function HostelPage() {
               );
             })}
           </div>
+          <HostelLocationMap lat={hostel.latitude} lng={hostel.longitude} name={hostel.hostel_name} />
         </div>
 
        

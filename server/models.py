@@ -49,7 +49,8 @@ class Hostel(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     hostel_name = db.Column(db.String, nullable=False)
-    location_coordinates = db.Column(db.Float, nullable=False)
+    latitude = db.Column(db.Float, nullable=False, default=-1.2921) # Default to Nairobi
+    longitude = db.Column(db.Float, nullable=False, default=36.8219)
     description = db.Column(db.String, nullable=False)
     status = db.Column(db.String, default='active')
     images = db.Column(db.String, nullable=False)
