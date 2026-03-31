@@ -80,5 +80,5 @@ const response = await fetch("/api/login", {
   );
 };
 
-// This is the "useAuth" hook you've heard about!
+
 export const useAuth = () => useContext(AuthContext);

@@ -32,10 +32,10 @@ return (
                   Welcome, {user.full_name} ({user.role})
                 </span>
                 {user.role === 'manager' && (
-                  <button variant="outline" size="sm" asChild>
+                  <button variant="outline" size="sm" asChild className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold  transition">
                     <Link to="/manager-dashboard">
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload Hostel
+                     
+                      Manage Hostels
                     </Link>
                   </button>
                 )}

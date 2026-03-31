@@ -49,7 +49,7 @@ class Hostel(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     hostel_name = db.Column(db.String, nullable=False)
-    latitude = db.Column(db.Float, nullable=False, default=-1.2921) # Default to Nairobi
+    latitude = db.Column(db.Float, nullable=False, default=-1.2921) 
     longitude = db.Column(db.Float, nullable=False, default=36.8219)
     description = db.Column(db.String, nullable=False)
     status = db.Column(db.String, default='active')
@@ -92,7 +92,7 @@ class Booking(db.Model, SerializerMixin):
     student_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     room_id = db.Column(db.Integer, db.ForeignKey('rooms.id'), nullable=False)
     status = db.Column(db.String, default='pending')
-    booking_date = db.Column(db.Date, server_default=db.func.now())
+    booking_date = db.Column(db.DateTime, server_default=db.func.now())
 
     student = db.relationship('User', back_populates='bookings')
     room = db.relationship('Room', back_populates='bookings')

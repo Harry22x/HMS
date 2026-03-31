@@ -42,15 +42,15 @@ const [mapPos, setMapPos] = useState([-1.2921, 36.8219]);
   const handleAmenityChange = (amenity) => {
   setSelectedAmenities(prev => 
     prev.includes(amenity) 
-      ? prev.filter(a => a !== amenity) // Remove if already there
-      : [...prev, amenity]              // Add if not there
+      ? prev.filter(a => a !== amenity) // remove if already there
+      : [...prev, amenity]              // but add if not there
   );
 };
 
  const handleSubmit = async (e) => {
   e.preventDefault();
 
-  // Create a FormData instance
+  
   const formData = new FormData();
 
   
@@ -80,13 +80,13 @@ const [mapPos, setMapPos] = useState([-1.2921, 36.8219]);
 
   const response = await fetch('http://127.0.0.1:5555/hostels', {
     method: 'POST',
-    // DO NOT set 'Content-Type' header! 
-    // The browser will automatically set it to 'multipart/form-data' with the boundary.
+  
     body: formData 
   });
 
   if (response.ok) {
     alert("Success!");
+    onHostelAdded();
     onClose();
   }
 };
@@ -102,7 +102,7 @@ const [mapPos, setMapPos] = useState([-1.2921, 36.8219]);
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Hostel Details Section */}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <label className="block font-semibold">Hostel Name</label>
@@ -208,7 +208,7 @@ const [mapPos, setMapPos] = useState([-1.2921, 36.8219]);
             type="submit" 
             className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all"
           >
-            Create Property Listing
+            Create Hostel Listing
           </button>
         </form>
       </div>

@@ -33,30 +33,33 @@ class Hostels(Resource):
         } for hostel in Hostel.query.all()]
         return make_response(hostels,200)
     def post(self):
-        # Use request.form instead of request.get_json()
+       
         hostel_name = request.form.get('hostel_name')
         description = request.form.get('description')
         manager_id = request.form.get('manager_id')
-        location_coordinates = request.form.get('location_coordinates', 0.0)
+        longitude = request.form.get('longitude')
+        latitude = request.form.get('latitude')
+
         amenities = request.form.get('amenities')
         
-        # Check for the main image
+     
         if 'hostel_image' not in request.files:
             return {'error': 'Hostel image is required'}, 400
 
         hostel_image_file = request.files.get('hostel_image')
         
         try:
-            # Upload main image
+            
             hostel_upload = cloudinary.uploader.upload(hostel_image_file)
 
-            # Create the Hostel
+           
             new_hostel = Hostel(
                 hostel_name=hostel_name,
                 description=description,
                 images=hostel_upload['secure_url'],
                 manager_id=manager_id,
-                location_coordinates=float(location_coordinates) if location_coordinates is not None else 0.0,
+                longitude = longitude,
+                latitude = latitude,
                 amenities=amenities,
                 status="active"
             )
@@ -100,6 +103,80 @@ class GetHostelById(Resource):
             return make_response(hostel.to_dict(),200) 
         else:
             return make_response({"error":"Hostel does not exist"},404)    
+        
+    def patch(self, id):
+            hostel = Hostel.query.filter_by(id=id).first()
+            if not hostel:
+                return {"error": "Hostel not found"}, 404
+         
+            hostel.hostel_name = request.form.get('hostel_name', hostel.hostel_name)
+            hostel.description = request.form.get('description', hostel.description)
+            hostel.latitude = float(request.form.get('latitude', hostel.latitude))
+            hostel.longitude = float(request.form.get('longitude', hostel.longitude))
+            hostel.amenities = request.form.get('amenities', hostel.amenities)
+
+           
+            if 'hostel_image' in request.files:
+                file_to_upload = request.files['hostel_image']
+                upload_result = cloudinary.uploader.upload(file_to_upload)
+                hostel.images = upload_result['secure_url']
+
+            try:
+                db.session.commit()
+                return make_response(hostel.to_dict(), 200)
+            except Exception as e:
+                db.session.rollback()
+                return make_response({"error": str(e)}, 400)
+    def delete(self, id):
+        hostel = Hostel.query.get(id)
+        if not hostel:
+            return {"error": "Hostel not found"}, 404
+
+        has_active_bookings = any(
+            len([b for b in room.bookings if b.status == 'active']) > 0 
+            for room in hostel.rooms
+        )
+
+        if has_active_bookings:
+            return {"error": "Cannot delete hostel with active student bookings."}, 400
+
+        db.session.delete(hostel)
+        db.session.commit()
+        return {"message": "Hostel and all associated rooms deleted successfully"}, 200
+            
+
+
+class RoomById(Resource):
+    def patch(self, id):
+        room = Room.query.filter_by(id=id).first()
+        if not room:
+            return {"error": "Room not found"}, 404
+
+        # Update text fields
+        room.room_type = request.form.get('room_type', room.room_type)
+        room.capacity = int(request.form.get('capacity', room.capacity))
+        room.price = float(request.form.get('price', room.price))
+        room.description = request.form.get('description', room.description)
+
+        # Handle Image Update
+        if 'room_image' in request.files:
+            upload_result = cloudinary.uploader.upload(request.files['room_image'])
+            room.images = upload_result['secure_url']
+
+        db.session.commit()
+        return make_response(room.to_dict(), 200)
+    def delete(self, id):
+        room = Room.query.get(id)
+        if not room:
+            return {"error": "Room not found"}, 404
+
+       
+        if room.current_occupancy > 0:
+            return {"error": "Cannot delete room while students are still checked in."}, 400
+
+        db.session.delete(room)
+        db.session.commit()
+        return {"message": "Room deleted successfully"}, 200
 
 class Login(Resource):
     def post(self):
@@ -132,6 +209,7 @@ api.add_resource(Hostels,'/hostels')
 api.add_resource(GetHostelById,'/hostels/<int:id>')
 api.add_resource(Login,'/login')
 api.add_resource(CheckSession,'/check_session')
+api.add_resource(RoomById,'/rooms/<int:id>')
 
 
 

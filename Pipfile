@@ -16,10 +16,11 @@ flask-jwt-extended = "*"
 dotenv = "*"
 gunicorn = "*"
 psycopg2-binary = "*"
-pytest = "*"
 flask = "*"
 werkzeug = "*"
 flask-sqlalchemy = "*"
 flask-migrate = "*"
+pytest = "*"
+flask-testing = "*"
 
 [dev-packages]
