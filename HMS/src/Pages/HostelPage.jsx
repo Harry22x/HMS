@@ -54,7 +54,7 @@ export default function HostelPage() {
                     <span className="font-bold text-lg">{room.room_type}</span>
                     <span className="text-blue-600 font-semibold">Ksh. {room.price}/mo</span>
                   </div>
-                  <p className="text-sm text-gray-500">{room.capacity} beds per room</p>
+                  <p className="text-sm text-gray-500">{room.capacity - room.current_occupancy} beds remaining</p>
                   {isFull && <span className="text-xs font-bold text-red-500 uppercase">Sold Out</span>}
                 </button>
               );
