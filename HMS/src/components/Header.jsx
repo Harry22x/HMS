@@ -1,22 +1,22 @@
 import { Link, useNavigate } from 'react-router';
-import { Building2,LogOut, Upload } from 'lucide-react';
+import { Building2, LogOut, Upload } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 
 
-export default function Header(){
+export default function Header() {
 
-    const { user, logout, loading } = useAuth();
-    const navigate = useNavigate()
+  const { user, logout, loading } = useAuth();
+  const navigate = useNavigate()
 
-    const handleLogout = () => {
-      logout();
-      navigate('/');
-    };
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
-    if (loading) return null;
-    //console.log(user)
+  if (loading) return null;
+  //console.log(user)
 
-return (
+  return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
@@ -31,11 +31,24 @@ return (
                 <span className="text-sm text-gray-600">
                   Welcome, {user.full_name} ({user.role})
                 </span>
+                {user.role === 'student' && (
+                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    <Link to="/my-bookings">My Bookings</Link>
+                  </button>
+                )}
                 {user.role === 'manager' && (
                   <button variant="outline" size="sm" asChild className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold  transition">
                     <Link to="/manager-dashboard">
-                     
+
                       Manage Hostels
+                    </Link>
+                  </button>
+                )}
+                {user.role === 'admin' && (
+                  <button variant="outline" size="sm" asChild className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold  transition">
+                    <Link to="/admin-dashboard">
+
+                      Admin Dashboard
                     </Link>
                   </button>
                 )}
@@ -58,5 +71,5 @@ return (
         </div>
       </div>
     </header>
-)
+  )
 }

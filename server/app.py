@@ -3,7 +3,7 @@ from config import app, db, migrate,api
 from models import User, Hostel, Room, Booking, Announcement, Complaint 
 from flask import request,make_response,session,jsonify
 from flask_restful import Resource
-from datetime import timedelta
+from datetime import timedelta, datetime
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import cloudinary
 import cloudinary.api
@@ -28,7 +28,11 @@ class Hostels(Resource):
             "longitude": hostel.longitude,
             "image":hostel.images,
             "amenities": hostel.amenities,
-            "description":hostel.description
+            "description":hostel.description,
+            "status":hostel.status,
+            "manager_name":hostel.manager.full_name,
+            "manager_email": hostel.manager.email
+
 
         } for hostel in Hostel.query.all()]
         return make_response(hostels,200)
@@ -61,7 +65,7 @@ class Hostels(Resource):
                 longitude = longitude,
                 latitude = latitude,
                 amenities=amenities,
-                status="active"
+                status="pending"
             )
             db.session.add(new_hostel)
             db.session.flush()
@@ -105,9 +109,13 @@ class GetHostelById(Resource):
             return make_response({"error":"Hostel does not exist"},404)    
         
     def patch(self, id):
+            data = request.get_json()
             hostel = Hostel.query.filter_by(id=id).first()
             if not hostel:
                 return {"error": "Hostel not found"}, 404
+            
+            if 'status' in data:
+                hostel.status = data['status'] 
          
             hostel.hostel_name = request.form.get('hostel_name', hostel.hostel_name)
             hostel.description = request.form.get('description', hostel.description)
@@ -203,13 +211,110 @@ class CheckSession(Resource):
             return make_response(user.to_dict(),200)
         else:
             return make_response({"error":"User does not exist"},404)
-              
-    
+
+class Bookings(Resource):
+    def post(self):
+        data = request.get_json()
+        user_id = data.get('user_id')
+        room_id = data.get('room_id')
+
+        #This checks if th room exists
+        room = Room.query.get(room_id)
+        if not room:
+            return {"error": "Room not found"}, 404
+
+       # This checks if the room has any space left
+        if room.current_occupancy >= room.capacity:
+            return {"error": "Room is already at full capacity!"}, 400
+
+        # 3. Safety Check: Has the student already booked here?
+        existing_booking = Booking.query.filter_by(student_id=user_id, room_id=room_id).first()
+        if existing_booking:
+            return {"error": "You already have an active booking for this room."}, 400
+
+        try:
+            # 4. now we create the booking
+            new_booking = Booking(
+                student_id=user_id,
+                room_id=room_id,
+                booking_date=datetime.utcnow(),
+                status="pending"
+            )
+            
+            # 5. Increment occupancy
+            room.current_occupancy += 1
+
+            db.session.add(new_booking)
+            db.session.commit()
+
+            return make_response(new_booking.to_dict(), 201)
+
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+class BookingByID(Resource):
+    def delete(self, id):
+        booking = Booking.query.get(id)
+        if not booking:
+            return {"error": "Booking not found"}, 404
+
+        try:
+            # 1. Find the associated room
+            room = Room.query.get(booking.room_id)
+            
+            # 2. Decrement occupancy (Safety: don't go below 0)
+            if room and room.current_occupancy > 0:
+                room.current_occupancy -= 1
+
+            # 3. Remove the booking
+            db.session.delete(booking)
+            db.session.commit()
+            
+            return {"message": "Booking cancelled and room space released"}, 200
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
+    def patch(self, id):
+        data = request.get_json()
+        booking = Booking.query.get(id)
+        
+        if not booking:
+            return {"error": "Booking not found"}, 404
+
+        # Check if we are updating the status
+        if 'status' in data:
+            new_status = data['status']
+            
+            # Logic: If changing TO rejected, free up the room spot
+            if new_status == 'rejected' and booking.status != 'rejected':
+                room = Room.query.get(booking.room_id)
+                if room.current_occupancy > 0:
+                    room.current_occupancy -= 1
+            
+            # Logic: If changing FROM rejected back to approved, take a spot
+            elif new_status == 'approved' and booking.status == 'rejected':
+                room = Room.query.get(booking.room_id)
+                if room.current_occupancy < room.capacity:
+                    room.current_occupancy += 1
+                else:
+                    return {"error": "Room is now full, cannot approve"}, 400
+
+            booking.status = new_status
+
+        # You can also update other fields here if needed in the future
+        # booking.booking_date = data.get('booking_date', booking.booking_date)
+
+        db.session.commit()
+        return make_response(booking.to_dict(), 200)
+
+
+api.add_resource(Bookings, '/bookings')
 api.add_resource(Hostels,'/hostels')
 api.add_resource(GetHostelById,'/hostels/<int:id>')
 api.add_resource(Login,'/login')
 api.add_resource(CheckSession,'/check_session')
 api.add_resource(RoomById,'/rooms/<int:id>')
+api.add_resource(BookingByID,'/bookings/<int:id>')
 
 
 

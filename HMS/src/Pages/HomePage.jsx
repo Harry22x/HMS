@@ -9,7 +9,8 @@ export default function Homepage() {
     fetch('http://127.0.0.1:5555/hostels')
       .then((r) => r.json())
       .then((data) => {
-        setHostels(data);
+      const visibleHostels = data.filter(hostel => hostel.status === 'approved');
+      setHostels(visibleHostels);
         setLoading(false);
       })
       .catch(err => {

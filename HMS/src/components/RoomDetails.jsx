@@ -1,12 +1,60 @@
-import React from 'react';
+import React, {useState} from 'react';
+import { useAuth } from '../AuthContext'; // Import your custom hook
+import { useNavigate } from 'react-router-dom';
 
-export default function RoomDetails({ room }) {
+export default function RoomDetails({ room,onBookingSuccess }) {
+  const { user, checkSession } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const remainingSpace = room.capacity - room.current_occupancy;
-  const occupancyRate = (room.current_occupancy / room.capacity) * 100;
-  
- 
+  const occupancyRate = (room.current_occupancy / room.capacity) * 100; 
   const isAlmostFull = occupancyRate >= 80 && occupancyRate < 100;
+  const isSoldOut = remainingSpace <= 0;
+
+  const handleBooking = async () => {
+    
+    if (!user) {
+      alert("Please login to book a room!");
+      navigate('/login');
+      return;
+    }
+
+ 
+    if (user.role !== 'student') {
+      alert("Only students can book rooms.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('http://127.0.0.1:5555/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user.id,
+          room_id: room.id,
+          status: 'confirmed' 
+        }),
+      });
+
+      if (response.ok) {
+        alert("Booking Successful! Pack your bags.");
+        // Call the parent function to refresh the room data (occupancy will have changed)
+        checkSession(localStorage.getItem("jwt"));
+        if (onBookingSuccess) onBookingSuccess();
+        
+      } else {
+        const errorData = await response.json();
+        alert(errorData.error || "Booking failed");
+      }
+    } catch (error) {
+      alert("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden animate-in fade-in duration-500">
@@ -42,9 +90,17 @@ export default function RoomDetails({ room }) {
             <span className="text-gray-500 font-medium"> / month</span>
           </div>
           
-          <button className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 transform hover:scale-105 transition-all">
-            Book Now
-          </button>
+         <button 
+          onClick={handleBooking}
+          disabled={loading || isSoldOut}
+          className={`px-10 py-4 rounded-2xl font-bold text-lg transition-all transform 
+            ${isSoldOut 
+              ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
+              : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 shadow-lg shadow-blue-200"
+            }`}
+        >
+          {loading ? "Processing..." : isSoldOut ? "Sold Out" : "Book Now"}
+        </button>
         </div>
       </div>
     </div>

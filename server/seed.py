@@ -16,7 +16,17 @@ def seed_database():
         m2 = User(full_name="Bob Smith", email="bob@hostel.com", role="manager")
         m2.password_hash = "password123"
 
-        db.session.add_all([m1, m2])
+        s1 = User(full_name="Eve Brown", email="eve@hostel.com", role="student")
+        s1.password_hash = "password123"
+        
+        s2 = User(full_name="Frank Davis", email="frank@hostel.com", role="student")
+        s2.password_hash = "password123"
+
+        a1 = User(full_name="Grace Wilson", email="grace@hostel.com", role="admin")
+        a1.password_hash = "password123"
+
+
+        db.session.add_all([m1, m2,s1,s2,a1])
         db.session.commit()
 
         print("Seeding hostels and rooms...")
@@ -64,7 +74,7 @@ def seed_database():
                 description=f"Top-tier student living at {h_data['name']}.",
                 images=h_data["img"],
                 amenities="WiFi, Laundry, Security",
-                status="active",
+                status="approved",
                 manager_id=h_data["mgr"].id
             )
             db.session.add(h)

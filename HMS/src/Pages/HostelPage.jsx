@@ -9,8 +9,8 @@ export default function HostelPage() {
   const [hostel, setHostel] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
 
-  useEffect(() => {
-    fetch(`http://127.0.0.1:5555/hostels/${id}`)
+function fetchHostel(){
+   fetch(`http://127.0.0.1:5555/hostels/${id}`)
       .then((r) => r.json())
       .then((data) => {
         setHostel(data);
@@ -18,6 +18,10 @@ export default function HostelPage() {
           setSelectedRoom(data.rooms[0]);
         }
       });
+}
+
+  useEffect(() => {
+   fetchHostel();
   }, [id]);
 
   if (!hostel) return <div className="p-10 text-center">Loading Hostel...</div>;
@@ -66,7 +70,7 @@ export default function HostelPage() {
        
         <div className="lg:col-span-2">
           {selectedRoom ? (
-            <RoomDetails room={selectedRoom} />
+            <RoomDetails room={selectedRoom}  onBookingSuccess={()=> fetchHostel()}/>
           ) : (
             <div className="h-full flex items-center justify-center border-2 border-dashed rounded-2xl text-gray-400">
               Select a room type to see details
