@@ -52,6 +52,12 @@ export default function Header() {
                     </Link>
                   </button>
                 )}
+                 <button variant="outline" size="sm" asChild className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold  transition">
+                    <Link to="/inbox">
+
+                      Inbox
+                    </Link>
+                  </button>
                 <button variant="ghost" size="sm" onClick={handleLogout}>
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout

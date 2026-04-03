@@ -1,8 +1,6 @@
 import React, { use, useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { Plus, Users, DollarSign, Bed, Edit3, Trash2 } from 'lucide-react';
-import EditHostelModal from '../components/EditHostelModal'; 
-import AddHostelForm from '../components/AddHostelForm';    
+import {  Users, DollarSign, Bed, Edit3, Trash2, AlertCircle, Clock } from 'lucide-react';  
 import EditRoomModal from '../components/EditRoomModal'; 
 import {Link} from 'react-router'
 
@@ -65,6 +63,18 @@ function fetchManagedHostels(){
           <img src={hostel.images} className="w-16 h-16 rounded-lg object-cover" alt="" />
           <h2 className="text-xl font-bold">{hostel.hostel_name}</h2>
         </div>
+        <div className="mt-2 flex items-center gap-2">
+  {hostel.status === 'pending' && (
+    <p className="text-orange-500 text-sm font-medium flex items-center gap-1">
+      <Clock size={14} /> Under Review by Admin
+    </p>
+  )}
+  {hostel.status === 'rejected' && (
+    <p className="text-red-500 text-sm font-medium flex items-center gap-1">
+      <AlertCircle size={14} /> This listing was rejected. Contact support.
+    </p>
+  )}
+</div>
         </Link>
         <button onClick={onEdit} className="text-blue-600 flex items-center gap-1 font-semibold hover:underline">
           <Edit3 size={16} /> Edit Details

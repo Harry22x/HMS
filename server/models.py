@@ -7,7 +7,7 @@ from config import db, bcrypt
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
     
-    serialize_rules = ('-_password_hash', '-managed_hostels.manager', '-bookings.student', '-sent_complaints.sender', '-received_complaints.receiver', '-announcements.sender')
+    serialize_rules = ('-_password_hash', '-managed_hostels.manager', '-bookings.student', '-sent_messages.sender', '-received_messages.receiver', '-announcements')
 
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String, nullable=False)
@@ -21,8 +21,8 @@ class User(db.Model, SerializerMixin):
     bookings = db.relationship('Booking', back_populates='student', cascade='all, delete-orphan')
     announcements = db.relationship('Announcement', back_populates='sender', cascade='all, delete-orphan')
     
-    sent_complaints = db.relationship('Complaint', foreign_keys='Complaint.sender_id', back_populates='sender')
-    received_complaints = db.relationship('Complaint', foreign_keys='Complaint.receiver_id', back_populates='receiver')
+    sent_messages = db.relationship('Message', foreign_keys='Message.sender_id', back_populates='sender')
+    received_messages = db.relationship('Message', foreign_keys='Message.receiver_id', back_populates='receiver')
 
     @hybrid_property
     def password_hash(self):
@@ -45,7 +45,7 @@ class User(db.Model, SerializerMixin):
 class Hostel(db.Model, SerializerMixin):
     __tablename__ = 'hostels'
     
-    serialize_rules = ('-rooms.hostel', '-manager.managed_hostels')
+    serialize_rules = ('-rooms.hostel', '-manager.managed_hostels', '-announcements')
 
     id = db.Column(db.Integer, primary_key=True)
     hostel_name = db.Column(db.String, nullable=False)
@@ -59,6 +59,7 @@ class Hostel(db.Model, SerializerMixin):
 
     manager = db.relationship('User', back_populates='managed_hostels')
     rooms = db.relationship('Room', back_populates='hostel', cascade='all, delete-orphan')
+    announcements = db.relationship('Announcement', back_populates='hostel', cascade='all, delete-orphan')
 
 class Room(db.Model, SerializerMixin):
     __tablename__ = 'rooms'
@@ -100,19 +101,21 @@ class Booking(db.Model, SerializerMixin):
 class Announcement(db.Model, SerializerMixin):
     __tablename__ = 'announcements'
     
-    serialize_rules = ('-sender.announcements',)
+    serialize_rules = ()
 
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    hostel_id = db.Column(db.Integer, db.ForeignKey('hostels.id'), nullable=False)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
     sender = db.relationship('User', back_populates='announcements')
+    hostel = db.relationship('Hostel', back_populates='announcements')
 
-class Complaint(db.Model, SerializerMixin):
-    __tablename__ = 'complaints'
+class Message(db.Model, SerializerMixin):
+    __tablename__ = 'messages'
     
-    serialize_rules = ('-sender.sent_complaints', '-receiver.received_complaints')
+    serialize_rules = ('-sender.sent_messages', '-receiver.received_messages')
 
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
@@ -120,5 +123,5 @@ class Complaint(db.Model, SerializerMixin):
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
-    sender = db.relationship('User', foreign_keys=[sender_id], back_populates='sent_complaints')
-    receiver = db.relationship('User', foreign_keys=[receiver_id], back_populates='received_complaints')
+    sender = db.relationship('User', foreign_keys=[sender_id], back_populates='sent_messages')
+    receiver = db.relationship('User', foreign_keys=[receiver_id], back_populates='received_messages')

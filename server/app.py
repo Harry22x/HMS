@@ -1,6 +1,6 @@
 
 from config import app, db, migrate,api  
-from models import User, Hostel, Room, Booking, Announcement, Complaint 
+from models import User, Hostel, Room, Booking, Announcement, Message 
 from flask import request,make_response,session,jsonify
 from flask_restful import Resource
 from datetime import timedelta, datetime
@@ -23,10 +23,10 @@ class Hostels(Resource):
     def get(self):
         hostels = [{
             "id": hostel.id,
-            "name": hostel.hostel_name,
+            "hostel_name": hostel.hostel_name,
             "latitude": hostel.latitude,
             "longitude": hostel.longitude,
-            "image":hostel.images,
+            "images":hostel.images,
             "amenities": hostel.amenities,
             "description":hostel.description,
             "status":hostel.status,
@@ -111,10 +111,13 @@ class GetHostelById(Resource):
     def patch(self, id):
             data = request.get_json()
             hostel = Hostel.query.filter_by(id=id).first()
+            current_user_role = data.get('current_user_role')
             if not hostel:
                 return {"error": "Hostel not found"}, 404
             
             if 'status' in data:
+                if current_user_role != 'admin':
+                    return {"error": "Unauthorized: Only admins can change hostel status"}, 403
                 hostel.status = data['status'] 
          
             hostel.hostel_name = request.form.get('hostel_name', hostel.hostel_name)
@@ -301,13 +304,44 @@ class BookingByID(Resource):
 
             booking.status = new_status
 
-        # You can also update other fields here if needed in the future
-        # booking.booking_date = data.get('booking_date', booking.booking_date)
+       
 
         db.session.commit()
         return make_response(booking.to_dict(), 200)
+    
+class Announcements(Resource):
+    def get(self):
+        # Fetch all announcements, usually ordered by newest first
+        announcements = Announcement.query.order_by(Announcement.timestamp.desc()).all()
+        return make_response([a.to_dict() for a in announcements], 200)
+    
+    def post(self):
+        data = request.get_json()
+        
+        # Check if this manager actually owns this hostel
+        hostel = Hostel.query.get(data.get('hostel_id'))
+        if not hostel or hostel.manager_id != data.get('sender_id'):
+            return {"error": "Unauthorized: You do not manage this hostel"}, 403
+
+        new_announcement = Announcement(
+            sender_id=data.get('sender_id'),
+            hostel_id=data.get('hostel_id'),
+            content=data.get('content')
+        )
+        
+        db.session.add(new_announcement)
+        db.session.commit()
+        return make_response(new_announcement.to_dict(), 201)
+
+# New route to get announcements for a specific hostel
+class HostelAnnouncements(Resource):
+    def get(self, hostel_id):
+        announcements = Announcement.query.filter_by(hostel_id=hostel_id).order_by(Announcement.timestamp.desc()).all()
+        return make_response([a.to_dict() for a in announcements], 200)
 
 
+api.add_resource(Announcements, '/announcements')
+api.add_resource(HostelAnnouncements, '/hostels/<int:hostel_id>/announcements')
 api.add_resource(Bookings, '/bookings')
 api.add_resource(Hostels,'/hostels')
 api.add_resource(GetHostelById,'/hostels/<int:id>')

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Wifi, Car, UtensilsCrossed, WashingMachine, MapPin , Cctv, Dumbbell, BookOpenText, Users,SmartphoneCharging} from 'lucide-react';
+import { Wifi, Car, UtensilsCrossed, WashingMachine , Cctv, Dumbbell, BookOpenText, Users,SmartphoneCharging} from 'lucide-react';
 import {Link} from 'react-router-dom';
 
-const HostelCard = ({id,name,location,image,description,amenities}) => {
+const HostelCard = ({id,hostel_name,images,description,amenities}) => {
   const amenities_logo = [
     { name: 'WiFi', icon: <Wifi size={16} /> },
     { name: 'Parking', icon: <Car size={16} /> },
@@ -21,7 +21,7 @@ const HostelCard = ({id,name,location,image,description,amenities}) => {
       
       <div className="relative h-56">
         <img 
-          src={image} 
+          src={images} 
           alt="University Heights Hostel" 
           className="w-full h-full object-cover"
         />
@@ -29,13 +29,8 @@ const HostelCard = ({id,name,location,image,description,amenities}) => {
 
       
       <div className="p-6">
-        <h2 className="text-2xl font-bold text-gray-900">{name}</h2>
+        <h2 className="text-2xl font-bold text-gray-900">{hostel_name}</h2>
         
-        <div className="flex items-center text-gray-500 mt-2 mb-4">
-          <MapPin size={18} className="mr-1" />
-          <span className="text-lg">{location}</span>
-        </div>
-
         <p className="text-gray-600 leading-relaxed mb-6">
          {description}
         </p>

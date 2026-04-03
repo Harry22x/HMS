@@ -11,6 +11,7 @@ export default function RoomDetails({ room,onBookingSuccess }) {
   const occupancyRate = (room.current_occupancy / room.capacity) * 100; 
   const isAlmostFull = occupancyRate >= 80 && occupancyRate < 100;
   const isSoldOut = remainingSpace <= 0;
+  const isNotStudent = (user && user.role !== 'student')
 
   const handleBooking = async () => {
     
@@ -35,7 +36,6 @@ export default function RoomDetails({ room,onBookingSuccess }) {
         body: JSON.stringify({
           user_id: user.id,
           room_id: room.id,
-          status: 'confirmed' 
         }),
       });
 
@@ -92,14 +92,14 @@ export default function RoomDetails({ room,onBookingSuccess }) {
           
          <button 
           onClick={handleBooking}
-          disabled={loading || isSoldOut}
+          disabled={loading || isSoldOut || !user || isNotStudent}
           className={`px-10 py-4 rounded-2xl font-bold text-lg transition-all transform 
-            ${isSoldOut 
+            ${isSoldOut || !user || isNotStudent
               ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
               : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-105 shadow-lg shadow-blue-200"
             }`}
         >
-          {loading ? "Processing..." : isSoldOut ? "Sold Out" : "Book Now"}
+          {loading ? "Processing..." : isSoldOut ? "Sold Out" : (!user || isNotStudent) ? "Only students can book rooms" : "Book Now"}
         </button>
         </div>
       </div>

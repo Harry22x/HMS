@@ -7,6 +7,7 @@ import ManagerDashboard from "./Pages/ManagerDashboard";
 import MyBookings from "./Pages/MyBookings";
 import AdminDashboard from "./Pages/AdminDashboard";
 import ProtectedRoutes from "./ProtectedRoutes";
+import InboxPage from "./Pages/InboxPage";
 
 const routes = [
     {path:"/",
@@ -42,6 +43,11 @@ const routes = [
             <AdminDashboard />
           </ProtectedRoutes>
         ) 
+      },
+      {
+        path:"inbox",
+        element:(<ProtectedRoutes><InboxPage/></ProtectedRoutes>
+        )
       }
       ]  
     }
