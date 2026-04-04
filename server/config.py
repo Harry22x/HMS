@@ -15,7 +15,12 @@ from flask_jwt_extended import JWTManager
 # Instantiate app, set attributes
 app = Flask(__name__)
 app.secret_key = b'Y\xf1Xz\x00\xad|eQ\x80t \xca\x1a\x10K'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+
+if os.environ.get('TESTING') == 'True':
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["JWT_SECRET_KEY"] = b'Y\xf1Xz\x00\xad|eQ\x80t \xca\x1a\x10K'
 jwt = JWTManager(app)

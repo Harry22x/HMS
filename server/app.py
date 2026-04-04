@@ -198,7 +198,7 @@ class Signup(Resource):
     def post(self):
         data = request.get_json()
         
-        # 1. Validation
+        #  Validation
         full_name = data.get('full_name')
         email = data.get('email')
         password = data.get('password')
@@ -207,20 +207,18 @@ class Signup(Resource):
         if not all([full_name, email, password, role]):
             return {"error": "All fields are required"}, 400
 
-        # 2. Check if user already exists
+        #  Check if user already exists
         if User.query.filter_by(email=email).first():
             return {"error": "Email already registered"}, 400
 
         try:
-            # 3. Create new user
-            # Note: If your User model hashes automatically in the __init__ or setter, 
-            # you can just pass password=password.
+ 
             new_user = User(
                 full_name=full_name,
                 email=email,
                 role=role
             )
-            # Setting password triggers hashing if you have a @property.setter
+           
             new_user.password_hash = password 
 
             db.session.add(new_user)
