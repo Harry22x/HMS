@@ -7,7 +7,7 @@ from config import db, bcrypt
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
     
-    serialize_rules = ('-_password_hash', '-managed_hostels.manager', '-bookings.student', '-sent_messages.sender', '-received_messages.receiver', '-announcements')
+    serialize_rules = ('-_password_hash', '-managed_hostels.manager', '-bookings.student', '-announcements', '-sent_messages', '-received_messages')
 
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String, nullable=False)
@@ -115,7 +115,7 @@ class Announcement(db.Model, SerializerMixin):
 class Message(db.Model, SerializerMixin):
     __tablename__ = 'messages'
     
-    serialize_rules = ('-sender.sent_messages', '-receiver.received_messages')
+    serialize_rules = ('-sender.sent_messages', '-sender.received_messages', '-receiver.sent_messages', '-receiver.received_messages')
 
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)

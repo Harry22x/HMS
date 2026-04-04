@@ -17,7 +17,6 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
-        //console.log(userData)
         return userData;
       }
       logout();
@@ -28,37 +27,43 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email,password) => {
-    try{
-
-const response = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email, password: password }),
-      });
-  
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Login failed");
-      }
-  
-      const responseData = await response.json();
-      const token = responseData.access_token; 
-  
-      if (token) {
-        localStorage.setItem("jwt", token); 
-        const userdata = await checkSession(token);  
-        await userdata
-        //console.log(userdata)
-        return true
-
-        //userdata.role == "Organizer" ? (navigate('/organizer-dashboard')) :(navigate("/"))
-        //navigate("/");
-      }
+  const parseResponse = async (response) => {
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
     }
 
-    catch(error){
-        console.error("Login error:", error);
+    if (!response.ok) {
+      const message = data?.error || data?.message || response.statusText || "Request failed";
+      throw new Error(message);
+    }
+
+    return data;
+  };
+
+  const login = async (email, password) => {
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const responseData = await parseResponse(response);
+      const token = responseData.access_token;
+
+      if (token) {
+        localStorage.setItem("jwt", token);
+        await checkSession(token);
+        return { success: true };
+      }
+
+      return { success: false, errorMessage: "Login failed" };
+    } catch (error) {
+      console.error("Login error:", error);
+      return { success: false, errorMessage: error.message || "Login failed" };
     }
   };
 
@@ -73,8 +78,28 @@ const response = await fetch("/api/login", {
     else setLoading(false);
   }, []);
 
+  const signup = async (full_name, email, password, role) => {
+    try {
+      const response = await fetch('http://127.0.0.1:5555/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ full_name, email, password, role })
+      });
+
+      const responseData = await parseResponse(response);
+      const token = responseData.access_token;
+      localStorage.setItem('jwt', token);
+      await checkSession(token);
+      return { success: true };
+    } catch (error) {
+      console.error("Signup error:", error);
+      return { success: false, errorMessage: error.message || "Signup failed" };
+    }
+  };
+
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, checkSession, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, checkSession, loading, signup }}>
       {children}
     </AuthContext.Provider>
   );

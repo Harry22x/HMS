@@ -1,49 +1,86 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../AuthContext';
 import { Mail, Megaphone, Send, PlusCircle, Building2 } from 'lucide-react';
+import MessagesTab from '../components/MessagesTab';
 
 export default function InboxPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('announcements');
   const [announcements, setAnnouncements] = useState([]);
+  const [errorMessage, setErrorMessage] = useState('');
   
   // Manager-specific state
   const [newAnnouncement, setNewAnnouncement] = useState("");
   const [targetHostelId, setTargetHostelId] = useState("");
 
   useEffect(() => {
-    fetchAnnouncements();
-    // Default the dropdown to the manager's first hostel
-    if (user?.role === 'manager' && user.managed_hostels?.length > 0) {
+    if (!user) return;
+
+    if (user.role === 'manager' && user.managed_hostels?.length > 0) {
       setTargetHostelId(user.managed_hostels[0].id);
     }
+
+    fetchAnnouncements();
   }, [user]);
 
-  const fetchAnnouncements = () => {
-    const url = user.role === 'manager' 
-      ? `http://127.0.0.1:5555/announcements` 
-      : `http://127.0.0.1:5555/hostels/${user.bookings[0]?.room.hostel_id}/announcements`;
-    
-    fetch(url).then(r => r.json()).then(setAnnouncements);
+  const fetchAnnouncements = async () => {
+    if (!user) return;
+
+    if (user.role !== 'manager' && !user.bookings[0]?.room?.hostel_id) {
+      setAnnouncements([]);
+      return;
+    }
+
+    const url = user.role === 'manager'
+      ? 'http://127.0.0.1:5555/announcements'
+      : `http://127.0.0.1:5555/hostels/${user.bookings[0]?.room?.hostel_id}/announcements`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || data?.message || 'Failed to load announcements');
+      }
+
+      if (user.role === 'manager') {
+        const managedIds = user.managed_hostels?.map(h => h.id) || [];
+        setAnnouncements(data.filter(a => managedIds.includes(a.hostel_id)));
+      } else {
+        setAnnouncements(data);
+      }
+      setErrorMessage('');
+    } catch (err) {
+      setAnnouncements([]);
+      setErrorMessage(err.message || 'Failed to load announcements');
+    }
   };
 
   const handlePostAnnouncement = async (e) => {
     e.preventDefault();
     if (!newAnnouncement.trim()) return;
 
-    const response = await fetch('http://127.0.0.1:5555/announcements', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sender_id: user.id,
-        hostel_id: targetHostelId,
-        content: newAnnouncement
-      })
-    });
+    try {
+      const response = await fetch('http://127.0.0.1:5555/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender_id: user.id,
+          hostel_id: targetHostelId,
+          content: newAnnouncement
+        })
+      });
 
-    if (response.ok) {
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.error || data?.message || 'Failed to post announcement');
+      }
+
       setNewAnnouncement("");
+      setErrorMessage('');
       fetchAnnouncements(); // Refresh the list to see the new post
+    } catch (err) {
+      setErrorMessage(err.message || 'Failed to post announcement');
     }
   };
 
@@ -102,6 +139,11 @@ export default function InboxPage() {
             )}
 
             {/* Announcement List */}
+            {errorMessage && (
+              <div className="mx-6 mt-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm">
+                {errorMessage}
+              </div>
+            )}
             <div className="flex-1 p-6 overflow-y-auto space-y-4">
               <h2 className="text-xl font-black text-gray-800 flex items-center gap-2">
                 <PlusCircle size={20} className="text-indigo-600"/> Feed
@@ -128,7 +170,7 @@ export default function InboxPage() {
         )}
 
         {activeTab === 'messages' && (
-          <div className="p-20 text-center text-gray-400">Direct Messages coming soon...</div>
+          <MessagesTab currentUser={user} />
         )}
       </div>
     </div>

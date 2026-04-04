@@ -188,6 +188,46 @@ class RoomById(Resource):
         db.session.delete(room)
         db.session.commit()
         return {"message": "Room deleted successfully"}, 200
+    
+class Signup(Resource):
+    def post(self):
+        data = request.get_json()
+        
+        # 1. Validation
+        full_name = data.get('full_name')
+        email = data.get('email')
+        password = data.get('password')
+        role = data.get('role')
+
+        if not all([full_name, email, password, role]):
+            return {"error": "All fields are required"}, 400
+
+        # 2. Check if user already exists
+        if User.query.filter_by(email=email).first():
+            return {"error": "Email already registered"}, 400
+
+        try:
+            # 3. Create new user
+            # Note: If your User model hashes automatically in the __init__ or setter, 
+            # you can just pass password=password.
+            new_user = User(
+                full_name=full_name,
+                email=email,
+                role=role
+            )
+            # Setting password triggers hashing if you have a @property.setter
+            new_user.password_hash = password 
+
+            db.session.add(new_user)
+            db.session.commit()
+
+            access_token = create_access_token(identity=str(new_user.id), expires_delta=timedelta(days=14))
+            return {'access_token': access_token}, 201
+
+
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 500
 
 class Login(Resource):
     def post(self):
@@ -311,7 +351,7 @@ class BookingByID(Resource):
     
 class Announcements(Resource):
     def get(self):
-        # Fetch all announcements, usually ordered by newest first
+        # Fetch all announcements which we'll order by newest first
         announcements = Announcement.query.order_by(Announcement.timestamp.desc()).all()
         return make_response([a.to_dict() for a in announcements], 200)
     
@@ -339,7 +379,78 @@ class HostelAnnouncements(Resource):
         announcements = Announcement.query.filter_by(hostel_id=hostel_id).order_by(Announcement.timestamp.desc()).all()
         return make_response([a.to_dict() for a in announcements], 200)
 
+class Messages(Resource):
+    def get(self):
+        # Fetch messages where the current user is either the sender OR receiver
+        user_id = request.args.get('user_id')
+        messages = Message.query.filter(
+            (Message.sender_id == user_id) | (Message.receiver_id == user_id)
+        ).order_by(Message.timestamp.asc()).all()
+        return make_response([m.to_dict() for m in messages], 200)
 
+    def post(self):
+        data = request.get_json()
+        new_msg = Message(
+            sender_id=data.get('sender_id'),
+            receiver_id=data.get('receiver_id'),
+            content=data.get('content')
+        )
+        db.session.add(new_msg)
+        db.session.commit()
+        return make_response(new_msg.to_dict(), 201)
+
+class ApprovedContacts(Resource):
+    def get(self, user_id):
+        # Get the current user to determine their role
+        user = User.query.get(user_id)
+        if not user:
+            return make_response({"error": "User not found"}, 404)
+        
+        contacts = []
+        
+        if user.role == 'student':
+            # For students: Get managers of hostels where they have approved bookings
+            approved_bookings = Booking.query.filter_by(student_id=user_id, status='approved').all()
+            manager_ids = set()
+            
+            for booking in approved_bookings:
+                room = Room.query.get(booking.room_id)
+                if room:
+                    hostel = Hostel.query.get(room.hostel_id)
+                    if hostel:
+                        manager_ids.add(hostel.manager_id)
+            
+            if manager_ids:
+                contacts = User.query.filter(User.id.in_(manager_ids)).all()
+        
+        elif user.role == 'manager':
+            # For managers: Get students with approved bookings in their hostels
+            manager_hostels = Hostel.query.filter_by(manager_id=user_id).all()
+            hostel_ids = [h.id for h in manager_hostels]
+            
+            if hostel_ids:
+                # Get all rooms in these hostels
+                rooms = Room.query.filter(Room.hostel_id.in_(hostel_ids)).all()
+                room_ids = [r.id for r in rooms]
+                
+                # Get students with approved bookings in these rooms
+                if room_ids:
+                    approved_bookings = Booking.query.filter(
+                        Booking.room_id.in_(room_ids),
+                        Booking.status == 'approved'
+                    ).all()
+                    
+                    student_ids = set(b.student_id for b in approved_bookings)
+                    if student_ids:
+                        contacts = User.query.filter(User.id.in_(student_ids)).all()
+        
+        return make_response([c.to_dict() for c in contacts], 200)
+
+
+
+api.add_resource(Signup, '/signup')
+api.add_resource(ApprovedContacts, '/users/<int:user_id>/approved-contacts')
+api.add_resource(Messages, '/messages')
 api.add_resource(Announcements, '/announcements')
 api.add_resource(HostelAnnouncements, '/hostels/<int:hostel_id>/announcements')
 api.add_resource(Bookings, '/bookings')
