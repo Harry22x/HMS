@@ -113,17 +113,29 @@ class GetHostelById(Resource):
             if not hostel:
                 return {"error": "Hostel not found"}, 404
             
-            hostel.hostel_name = request.form.get('hostel_name', hostel.hostel_name)
-            hostel.description = request.form.get('description', hostel.description)
-            hostel.latitude = float(request.form.get('latitude', hostel.latitude))
-            hostel.longitude = float(request.form.get('longitude', hostel.longitude))
-            hostel.amenities = request.form.get('amenities', hostel.amenities)
+            # Try to get JSON data (for admin status changes)
+            data = request.get_json(silent=True) or {}
+            current_user_role = data.get('current_user_role')
 
-           
-            if 'hostel_image' in request.files:
-                file_to_upload = request.files['hostel_image']
-                upload_result = cloudinary.uploader.upload(file_to_upload)
-                hostel.images = upload_result['secure_url']
+            # Strict Admin-Only Status Logic
+            if 'status' in data:
+                if current_user_role != 'admin':
+                    return {"error": "Unauthorized: Only admins can change hostel status"}, 403
+                hostel.status = data['status']
+                print(f"Admin updated hostel {id} status to {data['status']}")
+            
+            # Manager can edit hostel details (via FormData)
+            if current_user_role == 'manager' or request.form:
+                hostel.hostel_name = request.form.get('hostel_name', hostel.hostel_name)
+                hostel.description = request.form.get('description', hostel.description)
+                hostel.latitude = float(request.form.get('latitude', hostel.latitude))
+                hostel.longitude = float(request.form.get('longitude', hostel.longitude))
+                hostel.amenities = request.form.get('amenities', hostel.amenities)
+
+                if 'hostel_image' in request.files:
+                    file_to_upload = request.files['hostel_image']
+                    upload_result = cloudinary.uploader.upload(file_to_upload)
+                    hostel.images = upload_result['secure_url']
 
             try:
                 db.session.commit()
@@ -320,6 +332,28 @@ class BookingByID(Resource):
         # Check if we are updating the status
         if 'status' in data:
             new_status = data['status']
+            
+            # Security check: Only managers can approve/reject bookings
+            if new_status in ('approved', 'rejected'):
+                user_id = data.get('user_id')
+                user_role = data.get('user_role')
+                
+                # Verify user is a manager
+                if user_role != 'manager':
+                    return {"error": "Unauthorized: Only managers can update booking status"}, 403
+                
+                # Get the room and hostel to verify the manager owns this hostel
+                room = Room.query.get(booking.room_id)
+                if not room:
+                    return {"error": "Room not found"}, 404
+                
+                hostel = Hostel.query.get(room.hostel_id)
+                if not hostel:
+                    return {"error": "Hostel not found"}, 404
+                
+                # Verify the user is the manager of this hostel
+                if hostel.manager_id != user_id:
+                    return {"error": "Unauthorized: You do not manage this hostel"}, 403
             
             # Logic: If changing TO rejected, free up the room spot
             if new_status == 'rejected' and booking.status != 'rejected':

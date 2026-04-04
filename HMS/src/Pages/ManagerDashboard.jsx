@@ -34,15 +34,28 @@ const pendingBookings = hostels.flatMap(h =>
 )
 
 const handleStatusChange = async (bookingId, newStatus) => {
-  const response = await fetch(`http://127.0.0.1:5555/bookings/${bookingId} `, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: newStatus })
-  });
+  try {
+    const response = await fetch(`http://127.0.0.1:5555/bookings/${bookingId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        status: newStatus,
+        user_id: user.id,
+        user_role: user.role
+      })
+    });
 
-  if (response.ok) {
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      alert(data?.error || data?.message || `Failed to ${newStatus} booking`);
+      return;
+    }
+
     // Refresh the dashboard data
     fetchManagedHostels(); 
+  } catch (err) {
+    alert('Error updating booking status. Please try again.');
   }
 };
   if (!user) return <div>Loading...</div>;

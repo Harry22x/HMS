@@ -14,21 +14,7 @@ import app as app_routes  # Import to load routes
 # ─────────────────────────────────────────────
 # Fixtures
 # ─────────────────────────────────────────────
-
-@pytest.fixture
-def client():
-    """Set up a test Flask client with an in-memory SQLite database."""
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    app.config['JWT_SECRET_KEY'] = 'test-secret-key'
-
-    with app.app_context():
-        from models import User, Hostel, Room, Booking, Announcement, Complaint
-        db.create_all()
-        yield app.test_client()
-        db.session.remove()
-        db.drop_all()
-
+# Note: 'client' fixture is provided by conftest.py with isolated test database
 
 @pytest.fixture
 def auth_headers(client):
