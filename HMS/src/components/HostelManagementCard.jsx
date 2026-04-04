@@ -27,31 +27,43 @@ function fetchManagedHostels(){
   const handleDeleteHostel = async () => {
     if (!window.confirm(`Are you sure you want to delete ${hostel.hostel_name}? This will remove all rooms and cannot be undone.`)) return;
 
-    const response = await fetch(`http://127.0.0.1:5555/hostels/${hostel.id}`, {
-      method: 'DELETE'
-    });
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`http://127.0.0.1:5555/hostels/${hostel.id}`, {
+        method: 'DELETE'
+      });
 
-    if (response.ok) {
-      alert("Hostel deleted.");
-       fetchManagedHostels(); 
-    } else {
-      const err = await response.json();
-      alert(err.error);
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.error || data?.message || 'Failed to delete hostel');
+      }
+
+      fetchManagedHostels();
+    } catch (err) {
+      alert(err.message || 'Failed to delete hostel. Please try again.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const handleDeleteRoom = async (roomId) => {
   if (!window.confirm("Delete this room type? This will only work if the room is currently empty.")) return;
 
-  const response = await fetch(`http://127.0.0.1:5555/rooms/${roomId}`, {
-    method: 'DELETE'
-  });
+  try {
+    const response = await fetch(`http://127.0.0.1:5555/rooms/${roomId}`, {
+      method: 'DELETE'
+    });
 
-  if (response.ok) {
-     fetchManagedHostels(); 
-  } else {
-    const data = await response.json();
-    alert(data.error || "Could not delete room.");
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(data?.error || data?.message || 'Could not delete room.');
+    }
+
+    fetchManagedHostels();
+  } catch (err) {
+    alert(err.message || 'Could not delete room. Please try again.');
   }
 };
 
@@ -81,9 +93,14 @@ function fetchManagedHostels(){
         </button>
         <button 
               onClick={handleDeleteHostel} 
-              className="text-red-500 hover:text-red-700 flex items-center gap-1 font-semibold"
+              disabled={isDeleting}
+              className={`flex items-center gap-1 font-semibold ${
+                isDeleting 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-red-500 hover:text-red-700'
+              }`}
             >
-              <Trash2 size={16} /> Delete Hostel
+              <Trash2 size={16} /> {isDeleting ? 'Deleting...' : 'Delete Hostel'}
             </button>
       </div>
 

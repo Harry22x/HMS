@@ -5,7 +5,9 @@ export default function MessagesTab({ currentUser }) {
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");  const [errorMessage, setErrorMessage] = useState("");  const chatEndRef = useRef(null);
+  const [text, setText] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const chatEndRef = useRef(null);
 
   // Auto-scroll to bottom of chat
   const scrollToBottom = () => chatEndRef.current?.scrollIntoView({ behavior: "smooth" });

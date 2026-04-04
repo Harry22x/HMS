@@ -32,9 +32,11 @@ function fetchHostel(){
         
         
         <div className="lg:col-span-1">
+          {console.log(hostel)}
           <img src={hostel.images} alt={hostel.hostel_name} className="w-full h-64 object-cover rounded-2xl mb-4" />
           <h1 className="text-3xl font-bold">{hostel.hostel_name}</h1>
           <p className="text-gray-500 mb-6">{hostel.description}</p>
+          <p className="text-gray-500 mb-6">Contact : {hostel.manager.email}</p>
           
           <h3 className="text-xl font-semibold mb-4">Select Room Type</h3>
           <div className="space-y-3">

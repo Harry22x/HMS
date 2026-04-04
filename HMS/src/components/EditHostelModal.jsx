@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Save, MapPin, Image as ImageIcon } from 'lucide-react';
+import { X, Save, MapPin, Image as ImageIcon, AlertCircle } from 'lucide-react';
 import MapPicker from './MapPicker'; 
 
 
@@ -18,6 +18,7 @@ export default function EditHostelModal({ hostel, onClose, onUpdate }) {
   const [newImage, setNewImage] = useState(null);
   const [mapPos, setMapPos] = useState([hostel.latitude, hostel.longitude]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const AMENITY_OPTIONS = [
   "WiFi", "Laundry", "Security", "Parking", "Gym", 
   "Cafeteria", "Study Room", "Common Room", "Backup Generator"
@@ -35,6 +36,7 @@ export default function EditHostelModal({ hostel, onClose, onUpdate }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage('');
 
     const data = new FormData();
     data.append('hostel_name', formData.hostel_name);
@@ -43,7 +45,6 @@ export default function EditHostelModal({ hostel, onClose, onUpdate }) {
     data.append('longitude', mapPos[1]);
     data.append('amenities', formData.amenities.join(', '));
     
-    // this makes sure that it only appends image if a new one was selected
     if (newImage) {
       data.append('hostel_image', newImage);
     }
@@ -54,13 +55,17 @@ export default function EditHostelModal({ hostel, onClose, onUpdate }) {
         body: data,
       });
 
-      if (response.ok) {
-        const updated = await response.json();
-        await onUpdate();
-        onClose();
+      const responseData = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(responseData?.error || responseData?.message || 'Failed to update hostel');
       }
+
+      await onUpdate();
+      onClose();
     } catch (err) {
       console.error("Update failed", err);
+      setErrorMessage(err.message || 'Failed to update hostel. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -76,6 +81,12 @@ export default function EditHostelModal({ hostel, onClose, onUpdate }) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 overflow-y-auto space-y-6">
+          {errorMessage && (
+            <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm flex items-start gap-3">
+              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+              {errorMessage}
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Name & Description */}
             <div className="space-y-4">
@@ -144,7 +155,11 @@ export default function EditHostelModal({ hostel, onClose, onUpdate }) {
           <div className="pt-6 border-t flex gap-4">
             <button 
               type="submit" disabled={isSubmitting}
-              className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 disabled:bg-gray-400"
+              className={`flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all ${
+                isSubmitting 
+                  ? 'bg-gray-400 text-white cursor-not-allowed' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
             >
               <Save size={20} /> {isSubmitting ? "Saving Changes..." : "Save Changes"}
             </button>

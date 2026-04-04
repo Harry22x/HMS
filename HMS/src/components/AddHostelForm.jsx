@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Home, BedDouble } from 'lucide-react';
+import { X, Plus, Trash2, Home, BedDouble, AlertCircle } from 'lucide-react';
 import { useAuth } from '../AuthContext';
 import MapPicker from './MapPicker';
 
@@ -20,6 +20,9 @@ const [mapPos, setMapPos] = useState([-1.2921, 36.8219]);
     location_coordinates: 0.0,
     amenities: ''
   });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+const [errorMessage, setErrorMessage] = useState('');
 
   const [rooms, setRooms] = useState([
     { room_type: 'Premium', capacity: 1, price: 0, room_image: '', description: '' }
@@ -49,45 +52,52 @@ const [mapPos, setMapPos] = useState([-1.2921, 36.8219]);
 
  const handleSubmit = async (e) => {
   e.preventDefault();
+  setIsSubmitting(true);
+  setErrorMessage('');
 
-  
-  const formData = new FormData();
+  try {
+    const formData = new FormData();
 
-  
-  formData.append('hostel_name', hostelData.hostel_name);
-  formData.append('description', hostelData.description);
-  formData.append('manager_id', user.id);
-  formData.append('location_coordinates', hostelData.location_coordinates);
-  formData.append('amenities', selectedAmenities.join(', '));
-  formData.append('latitude', mapPos[0]);
-  formData.append('longitude', mapPos[1])
+    formData.append('hostel_name', hostelData.hostel_name);
+    formData.append('description', hostelData.description);
+    formData.append('manager_id', user.id);
+    formData.append('location_coordinates', hostelData.location_coordinates);
+    formData.append('amenities', selectedAmenities.join(', '));
+    formData.append('latitude', mapPos[0]);
+    formData.append('longitude', mapPos[1])
 
-  formData.append('hostel_image', hostelData.hostel_image);
+    formData.append('hostel_image', hostelData.hostel_image);
 
-  formData.append('rooms_info', JSON.stringify(rooms.map(r => ({
-    room_type: r.room_type,
-    capacity: r.capacity,
-    price: r.price,
-    description: r.description
-  }))));
+    formData.append('rooms_info', JSON.stringify(rooms.map(r => ({
+      room_type: r.room_type,
+      capacity: r.capacity,
+      price: r.price,
+      description: r.description
+    }))));
 
-  
-  rooms.forEach((room, index) => {
-    if (room.room_image) {
-      formData.append(`room_image_${index}`, room.room_image);
+    rooms.forEach((room, index) => {
+      if (room.room_image) {
+        formData.append(`room_image_${index}`, room.room_image);
+      }
+    });
+
+    const response = await fetch('http://127.0.0.1:5555/hostels', {
+      method: 'POST',
+      body: formData 
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      throw new Error(data?.error || data?.message || 'Failed to create hostel');
     }
-  });
 
-  const response = await fetch('http://127.0.0.1:5555/hostels', {
-    method: 'POST',
-  
-    body: formData 
-  });
-
-  if (response.ok) {
-    alert("Success!");
     onHostelAdded();
     onClose();
+  } catch (err) {
+    setErrorMessage(err.message || 'Failed to create hostel. Please try again.');
+  } finally {
+    setIsSubmitting(false);
   }
 };
 
@@ -100,6 +110,13 @@ const [mapPos, setMapPos] = useState([-1.2921, 36.8219]);
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><X /></button>
         </div>
+
+        {errorMessage && (
+          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm flex items-start gap-3">
+            <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+            {errorMessage}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
 
@@ -206,9 +223,14 @@ const [mapPos, setMapPos] = useState([-1.2921, 36.8219]);
 
           <button 
             type="submit" 
-            className="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all"
+            disabled={isSubmitting}
+            className={`w-full py-4 rounded-2xl font-bold text-lg shadow-lg transition-all ${
+              isSubmitting 
+                ? 'bg-gray-400 text-white cursor-not-allowed shadow-gray-200' 
+                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200'
+            }`}
           >
-            Create Hostel Listing
+            {isSubmitting ? 'Submitting...' : 'Create Hostel Listing'}
           </button>
         </form>
       </div>

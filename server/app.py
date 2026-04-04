@@ -109,17 +109,10 @@ class GetHostelById(Resource):
             return make_response({"error":"Hostel does not exist"},404)    
         
     def patch(self, id):
-            data = request.get_json()
             hostel = Hostel.query.filter_by(id=id).first()
-            current_user_role = data.get('current_user_role')
             if not hostel:
                 return {"error": "Hostel not found"}, 404
             
-            if 'status' in data:
-                if current_user_role != 'admin':
-                    return {"error": "Unauthorized: Only admins can change hostel status"}, 403
-                hostel.status = data['status'] 
-         
             hostel.hostel_name = request.form.get('hostel_name', hostel.hostel_name)
             hostel.description = request.form.get('description', hostel.description)
             hostel.latitude = float(request.form.get('latitude', hostel.latitude))
@@ -443,6 +436,20 @@ class ApprovedContacts(Resource):
                     student_ids = set(b.student_id for b in approved_bookings)
                     if student_ids:
                         contacts = User.query.filter(User.id.in_(student_ids)).all()
+        
+        elif user.role == 'admin':
+            # For admins: Get all users who have sent them messages
+            sender_ids = db.session.query(Message.sender_id).filter(Message.receiver_id == user_id).distinct().all()
+            sender_ids = [sid[0] for sid in sender_ids]
+            
+            if sender_ids:
+                contacts = User.query.filter(User.id.in_(sender_ids)).all()
+        
+        # Add admin to contacts for students and managers (not for admin themselves)
+        if user.role in ('student', 'manager'):
+            admin = User.query.filter_by(role='admin').first()
+            if admin:
+                contacts.append(admin)
         
         return make_response([c.to_dict() for c in contacts], 200)
 
