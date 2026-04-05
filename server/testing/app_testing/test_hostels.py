@@ -48,8 +48,11 @@ class TestHostels:
             data=data,
             content_type='multipart/form-data'
         )
+       
+        print(response)
         assert response.status_code == 201
         result = response.get_json()
+        print(result)
         assert result['hostel_name'] == 'New Hostel'
 
     def test_create_hostel_missing_image(self, client):

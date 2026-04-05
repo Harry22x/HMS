@@ -29,7 +29,7 @@ class TestLogin:
             json={'email': 'login@example.com', 'password': 'secret'},
             content_type='application/json'
         )
-        print("Status Code: ", response.status_code)
+        print("Status Code: ", response)
         print(response.get_json())
         assert response.status_code == 200
         assert 'access_token' in response.get_json()

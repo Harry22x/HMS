@@ -21,11 +21,11 @@ export default function Homepage() {
       });
   }, []);
 
-  // 2. Filter logic: This runs every time 'searchTerm' or 'hostels' changes
+  
   const filteredHostels = hostels.filter((hostel) => {
     const nameMatch = hostel.hostel_name.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Check amenities - assuming it's a string like "Wifi, Gym, Laundry"
+   
     const amenityMatch = hostel.amenities?.toLowerCase().includes(searchTerm.toLowerCase());
     
     return nameMatch || amenityMatch;

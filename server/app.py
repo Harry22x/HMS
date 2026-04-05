@@ -113,7 +113,7 @@ class GetHostelById(Resource):
             if not hostel:
                 return {"error": "Hostel not found"}, 404
             
-            # Try to get JSON data (for admin status changes)
+            
             data = request.get_json(silent=True) or {}
             current_user_role = data.get('current_user_role')
 
