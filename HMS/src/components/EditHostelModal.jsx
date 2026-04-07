@@ -125,7 +125,7 @@ export default function EditHostelModal({ hostel, onClose, onUpdate }) {
             </div>
           </div>
 
-          {/* Amenities Selection */}
+          {/* amenities selection area */}
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">Amenities</label>
             <div className="flex flex-wrap gap-2">

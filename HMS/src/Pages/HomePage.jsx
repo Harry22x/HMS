@@ -1,18 +1,18 @@
 import HostelCard from "../components/HostelCard";
 import { useEffect, useState } from "react";
-import { Search } from "lucide-react"; // Import a search icon
+import { Search } from "lucide-react"; 
 
 export default function Homepage() {
   const [hostels, setHostels] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(""); // 1. New state for search
+  const [searchTerm, setSearchTerm] = useState(""); 
 
   useEffect(() => {
     fetch('http://127.0.0.1:5555/hostels')
       .then((r) => r.json())
       .then((data) => {
-        const visibleHostels = data.filter(hostel => hostel.status === 'approved');
-        setHostels(visibleHostels);
+        const visibleHostels = data.filter(hostel => hostel.status === 'approved'); // this ensures only approved
+        setHostels(visibleHostels);                                                 // hostels are shown
         setLoading(false);
       })
       .catch(err => {
@@ -49,7 +49,7 @@ export default function Homepage() {
               Browse through our wide selection of student accommodation options
             </p>
             
-            {/* 3. The Search Bar UI */}
+           {/* Search bar */}
             <div className="relative max-w-xl group">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <Search className="text-blue-400 group-focus-within:text-white-600 transition-colors" size={20} />
@@ -78,7 +78,7 @@ export default function Homepage() {
           </div>
         </div>
         
-        {/* 4. Render filteredHostels instead of hostels */}
+       
         {filteredHostels.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredHostels.map((hostel) => (

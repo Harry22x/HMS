@@ -32,6 +32,9 @@ class TestMessagesRoutes:
             },
             content_type='application/json'
         )
+        print("Message test case: ")
+        print("Status Code: ", response)
+        print(response.get_json())
         assert response.status_code == 201
         assert response.get_json()['content'] == 'I have a problem with my booking.'
 
@@ -58,6 +61,10 @@ class TestMessagesRoutes:
             },
             content_type='application/json'
         )
+        print("Manager reply test case: ")
+        print("Status Code: ", response)
+        print("Sender ID:",response.get_json()['sender_id'])
+
         assert response.status_code == 201
         assert response.get_json()['sender_id'] == manager_id
 
@@ -96,6 +103,10 @@ class TestAnnouncementsRoutes:
             },
             content_type='application/json'
         )
+        print("Announcement posting test:")
+        print("Status Code: ", response)
+        print(response.get_json()['content'])
+
         assert response.status_code == 201
         assert response.get_json()['content'] == 'New cleaning schedule posted.'
 
@@ -130,6 +141,10 @@ class TestAnnouncementsRoutes:
             hostel_id = hostel.id
 
         response = client.get(f'/hostels/{hostel_id}/announcements')
+        print("Announcement retrieveal test: ")
+        print("Status Code: ", response)
+        print("Announcements: ", response.get_json()[0]['content'])
+
         assert response.status_code == 200
         announcements = response.get_json()
         assert len(announcements) == 1

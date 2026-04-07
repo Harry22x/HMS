@@ -173,6 +173,9 @@ class TestAdminHostelStatus:
             f'/hostels/{seed_hostel}',
             json={'status': 'approved', 'current_user_role': 'admin'}
         )
+        print("Manager approval test case:")
+        print("Status Code: ", response)
+        print("Database hostel status: ",response.get_json()['status'])
         assert response.status_code == 200
         assert response.get_json()['status'] == 'approved'
 
@@ -182,5 +185,8 @@ class TestAdminHostelStatus:
             f'/hostels/{seed_hostel}',
             json={'status': 'suspended', 'current_user_role': 'admin'}
         )
+        print("Manager suspension test case:")
+        print("Status Code: ", response)
+        print("Database hostel status: ",response.get_json()['status'])
         assert response.status_code == 200
         assert response.get_json()['status'] == 'suspended'

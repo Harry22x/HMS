@@ -6,7 +6,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 from config import app, db
-import app as app_routes  # Import to load routes
+import app as app_routes  # We import to load routes
 
 
 class TestBookingRoutes:
@@ -28,7 +28,8 @@ class TestBookingRoutes:
             json={'user_id': student_id, 'room_id': room_id},
             content_type='application/json'
         )
-        
+        print("Booking test case: ")
+        print("Status Code: ", response)
         print(response.get_json())
         assert response.status_code == 201
         assert response.get_json()['student_id'] == student_id
@@ -96,10 +97,15 @@ class TestBookingRoutes:
             content_type='application/json'
         )
         
+        print("Booking approval test case:")
+        print("Status Code: ", response)
+        print("Database booking status: ",response.get_json()['status'])
+
+
         assert response.status_code == 200
         assert response.get_json()['status'] == 'approved'
 
-        # Verify booking status is updated in the database
+        # This verifIes that booking status attribute is updated in the database
         with app.app_context():
             updated_booking = Booking.query.get(booking_id)
             assert updated_booking.status == 'approved'

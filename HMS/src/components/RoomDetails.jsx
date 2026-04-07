@@ -41,7 +41,7 @@ export default function RoomDetails({ room,onBookingSuccess }) {
 
       if (response.ok) {
         alert("Booking Successful! Wait for confirmation.");
-        // Call the parent function to refresh the room data (occupancy will have changed)
+        // Call the parent function to refresh the room data so occupancy changes
         checkSession(localStorage.getItem("jwt"));
         if (onBookingSuccess) onBookingSuccess();
         

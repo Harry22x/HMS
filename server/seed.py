@@ -1,5 +1,5 @@
 from config import app, db, bcrypt
-from models import User, Hostel, Room
+from models import User, Hostel, Room, Booking, Announcement, Message
 from datetime import datetime
 
 def seed_database():
@@ -8,6 +8,10 @@ def seed_database():
         Room.query.delete()
         Hostel.query.delete()
         User.query.delete()
+        Booking.query.delete()
+        Announcement.query.delete()
+        Message.query.delete()
+
 
         print("Creating managers...")
         m1 = User(full_name="Alice Johnson", email="alice@hostel.com", role="manager")

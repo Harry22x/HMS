@@ -88,6 +88,9 @@ class TestSignup:
             },
             content_type='application/json'
         )
+        print("Signup tese case: ")
+        print("Status Code: ", response)
+        print(response.get_json())
         assert response.status_code == 201
         assert 'access_token' in response.get_json()
 

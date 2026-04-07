@@ -16,7 +16,7 @@ export default function MessagesTab({ currentUser }) {
     scrollToBottom();
   }, [messages]);
 
-  // Fetch approved contacts based on user role
+  // first we fetch the approved contacts based on user role attribute
   useEffect(() => {
     if (currentUser && currentUser.id) {
       fetch(`http://127.0.0.1:5555/users/${currentUser.id}/approved-contacts`)
