@@ -81,7 +81,7 @@ export default function RoomDetails({ room,onBookingSuccess }) {
         <div className="prose text-gray-600 mb-8">
             This {room.room_type.toLowerCase()} room is designed for students seeking a 
             balance between privacy and community. Includes high-speed internet, 
-            study desks, and shared storage units.
+            study desks and shared storage units.
         </div>
 
         <div className="flex items-center justify-between pt-6 border-t border-gray-100">
