@@ -408,6 +408,13 @@ class Messages(Resource):
     def get(self):
         # Fetch messages where the current user is either the sender OR receiver
         user_id = request.args.get('user_id')
+
+        unread_messages = Message.query.filter_by(receiver_id=user_id, is_read=False).all()
+        if unread_messages:
+            for msg in unread_messages:
+                msg.is_read = True
+            db.session.commit()
+
         messages = Message.query.filter(
             (Message.sender_id == user_id) | (Message.receiver_id == user_id)
         ).order_by(Message.timestamp.asc()).all()
@@ -484,9 +491,14 @@ class ApprovedContacts(Resource):
                 contacts.append(admin)
         
         return make_response([c.to_dict() for c in contacts], 200)
+class UnreadMessageCount(Resource):
+    def get(self, user_id):
+        # Count messages where the user is the receiver AND is_read is False
+        count = Message.query.filter_by(receiver_id=user_id, is_read=False).count()
+        return make_response({"unread_count": count}, 200)
 
 
-
+api.add_resource(UnreadMessageCount, '/users/<int:user_id>/unread-count')
 api.add_resource(Signup, '/signup')
 api.add_resource(ApprovedContacts, '/users/<int:user_id>/approved-contacts')
 api.add_resource(Messages, '/messages')

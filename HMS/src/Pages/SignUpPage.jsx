@@ -9,7 +9,7 @@ export default function SignUpPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student' //we'll set student as the default role
+    role: 'student' //we set student as the default role
   });
   const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();

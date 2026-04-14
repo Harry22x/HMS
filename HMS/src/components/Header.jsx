@@ -1,12 +1,29 @@
 import { Link, useNavigate } from 'react-router';
-import { Building2, LogOut, Upload } from 'lucide-react';
+import { Building2, LogOut, Upload, Mail } from 'lucide-react';
 import { useAuth } from '../AuthContext';
+import { useEffect, useState } from 'react';
+
 
 
 export default function Header() {
 
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate()
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  useEffect(() => {
+    if (user) {
+      const fetchCount = () => {
+        fetch(`http://127.0.0.1:5555/users/${user.id}/unread-count`)
+          .then(r => r.json())
+          .then(data => setUnreadCount(data.unread_count));
+      };
+
+      fetchCount();
+      const interval = setInterval(fetchCount, 10000); // Check every 10 seconds
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   const handleLogout = () => {
     logout();
@@ -52,12 +69,21 @@ export default function Header() {
                     </Link>
                   </button>
                 )}
-                 <button variant="outline" size="sm" asChild className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold  transition">
-                    <Link to="/inbox">
+                <button variant="outline" size="sm" asChild className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold  transition">
+                  <Link to="/inbox" className="relative flex items-center gap-2 font-bold">
 
-                      Inbox
-                    </Link>
-                  </button>
+                    <Mail size={20} />
+                    <span>Inbox</span>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-2 -right-2 flex h-4 w-4">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-[10px] text-white items-center justify-center font-bold">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      </span>
+                    )}
+                  </Link>
+                </button>
                 <button variant="ghost" size="sm" onClick={handleLogout}>
                   <LogOut className="w-4 h-4 mr-2" />
                   Logout
